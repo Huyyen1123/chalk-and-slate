@@ -1,0 +1,447 @@
+<title>Chalk &amp; Slate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --page:       #17221c;
+    --wood-a:     #6b4f36;
+    --wood-b:     #3c2a1d;
+    --slate:      #24382f;
+    --slate-2:    #1c2d26;
+    --chalk:      #f1ecdf;
+    --chalk-dim:  #b6ae98;
+    --gold:       #e0ac4f;
+    --blue:       #8fb8ce;
+    --coral:      #e2705a;
+    --focus:      #f1ecdf;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    background: var(--page);
+    background-image:
+      radial-gradient(ellipse 60% 40% at 15% 10%, rgba(255,255,255,0.03), transparent 60%),
+      radial-gradient(ellipse 50% 35% at 90% 85%, rgba(255,255,255,0.025), transparent 60%);
+    color: var(--chalk);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 18px;
+  }
+
+  .stage{
+    width: min(92vw, 460px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+  }
+
+  header{
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  h1{
+    margin: 0;
+    font-family: "Permanent Marker", "Segoe UI", cursive;
+    font-weight: 400;
+    font-size: clamp(2.1rem, 9vw, 2.8rem);
+    letter-spacing: 0.01em;
+    color: var(--chalk);
+    text-shadow:
+      0 0 1px rgba(241,236,223,0.35),
+      0 0 18px rgba(241,236,223,0.08);
+    text-wrap: balance;
+    transform: rotate(-1.2deg);
+  }
+
+  .caption{
+    margin: 0;
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--chalk-dim);
+  }
+
+  .status{
+    min-height: 1.4em;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--chalk);
+    text-align: center;
+  }
+  .status .who{ color: var(--gold); }
+  .status .who.o{ color: var(--blue); }
+
+  .frame{
+    padding: 16px;
+    border-radius: 14px;
+    background: linear-gradient(150deg, var(--wood-a), var(--wood-b));
+    box-shadow:
+      0 30px 55px -22px rgba(0,0,0,0.65),
+      inset 0 0 0 1px rgba(255,255,255,0.06);
+  }
+
+  .board-wrap{
+    position: relative;
+    width: min(78vw, 340px);
+    aspect-ratio: 1;
+    background:
+      radial-gradient(ellipse 70% 50% at 30% 20%, rgba(255,255,255,0.035), transparent 60%),
+      linear-gradient(155deg, var(--slate), var(--slate-2));
+    border-radius: 6px;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35), inset 0 2px 10px rgba(0,0,0,0.3);
+  }
+
+  .board-wrap svg.overlay{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .board{
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+  }
+
+  .cell{
+    background: transparent;
+    border: none;
+    margin: 0;
+    padding: 10%;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cell:disabled{ cursor: default; }
+  .cell:focus-visible{
+    outline: 2px dashed var(--focus);
+    outline-offset: -6px;
+    border-radius: 4px;
+  }
+  .cell svg{ width: 100%; height: 100%; display: block; }
+
+  .chalk-line{
+    fill: none;
+    stroke: var(--chalk-dim);
+    stroke-width: 3.2;
+    stroke-linecap: round;
+    filter: url(#chalk-rough-lg);
+    opacity: 0.85;
+  }
+
+  .chalk-mark{
+    fill: none;
+    stroke-width: 9;
+    stroke-linecap: round;
+    filter: url(#chalk-rough);
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: draw-in 0.32s ease forwards;
+  }
+  .chalk-mark.x{ stroke: var(--gold); }
+  .chalk-mark.o{ stroke: var(--blue); }
+
+  .win-line{
+    fill: none;
+    stroke: var(--coral);
+    stroke-width: 8;
+    stroke-linecap: round;
+    filter: url(#chalk-rough-lg);
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: draw-in 0.4s ease forwards;
+  }
+
+  @keyframes draw-in{
+    to{ stroke-dashoffset: 0; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .chalk-mark, .win-line, .grid-draw{ animation: none !important; stroke-dashoffset: 0 !important; }
+  }
+
+  .scoreboard{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    width: 100%;
+  }
+  .tally{
+    background: linear-gradient(155deg, var(--slate), var(--slate-2));
+    border-radius: 8px;
+    padding: 10px 6px 12px;
+    text-align: center;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+  }
+  .tally .n{
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-weight: 600;
+    font-size: 1.5rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .tally.x .n{ color: var(--gold); }
+  .tally.o .n{ color: var(--blue); }
+  .tally.d .n{ color: var(--chalk-dim); }
+  .tally .lbl{
+    display: block;
+    margin-top: 2px;
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--chalk-dim);
+  }
+
+  .controls{
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .new-game{
+    font-family: "IBM Plex Sans", sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: 0.03em;
+    color: var(--chalk);
+    background: transparent;
+    border: 1.5px dashed var(--chalk-dim);
+    border-radius: 999px;
+    padding: 9px 22px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  }
+  .new-game:hover{ background: rgba(241,236,223,0.06); border-color: var(--chalk); }
+  .new-game:active{ transform: scale(0.97); }
+  .new-game:focus-visible{ outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .reset-score{
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 0.74rem;
+    color: var(--chalk-dim);
+    background: none;
+    border: none;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    padding: 4px;
+  }
+  .reset-score:hover{ color: var(--chalk); }
+  .reset-score:focus-visible{ outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
+</style>
+
+<div class="stage">
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <filter id="chalk-rough" filterUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="140">
+        <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.4" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+      <filter id="chalk-rough-lg" filterUnits="userSpaceOnUse" x="-20" y="-20" width="340" height="340">
+        <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.4" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <header>
+    <h1>Chalk &amp; Slate</h1>
+    <p class="caption">Tic-tac-toe, the old-fashioned way</p>
+  </header>
+
+  <p class="status" id="status" aria-live="polite">
+    <span class="who">X</span> to move
+  </p>
+
+  <div class="frame">
+    <div class="board-wrap">
+      <svg class="overlay" id="grid-svg" viewBox="0 0 300 300">
+        <line class="chalk-line" x1="100" y1="10" x2="100" y2="290"/>
+        <line class="chalk-line" x1="200" y1="10" x2="200" y2="290"/>
+        <line class="chalk-line" x1="10" y1="100" x2="290" y2="100"/>
+        <line class="chalk-line" x1="10" y1="200" x2="290" y2="200"/>
+      </svg>
+      <svg class="overlay" id="win-svg" viewBox="0 0 300 300"></svg>
+      <div class="board" id="board"></div>
+    </div>
+  </div>
+
+  <div class="scoreboard">
+    <div class="tally x"><span class="n" id="score-x">0</span><span class="lbl">X wins</span></div>
+    <div class="tally d"><span class="n" id="score-d">0</span><span class="lbl">Draws</span></div>
+    <div class="tally o"><span class="n" id="score-o">0</span><span class="lbl">O wins</span></div>
+  </div>
+
+  <div class="controls">
+    <button class="new-game" id="new-game">New game</button>
+    <button class="reset-score" id="reset-score">Reset score</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var boardEl = document.getElementById('board');
+  var statusEl = document.getElementById('status');
+  var winSvg = document.getElementById('win-svg');
+  var newGameBtn = document.getElementById('new-game');
+  var resetScoreBtn = document.getElementById('reset-score');
+
+  var LINES = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+
+  var board = new Array(9).fill(null);
+  var current = 'X';
+  var over = false;
+  var scores = { X: 0, O: 0, D: 0 };
+
+  function loadScores(){
+    try{
+      var raw = localStorage.getItem('chalk-and-slate-scores');
+      if(raw){
+        var parsed = JSON.parse(raw);
+        if(typeof parsed.X === 'number') scores.X = parsed.X;
+        if(typeof parsed.O === 'number') scores.O = parsed.O;
+        if(typeof parsed.D === 'number') scores.D = parsed.D;
+      }
+    }catch(e){ /* private mode or blocked storage: start fresh */ }
+  }
+  function saveScores(){
+    try{ localStorage.setItem('chalk-and-slate-scores', JSON.stringify(scores)); }
+    catch(e){ /* ignore */ }
+  }
+
+  function renderScores(){
+    document.getElementById('score-x').textContent = scores.X;
+    document.getElementById('score-o').textContent = scores.O;
+    document.getElementById('score-d').textContent = scores.D;
+  }
+
+  function cellCenter(i){
+    var col = i % 3, row = Math.floor(i / 3);
+    return { x: 50 + col * 100, y: 50 + row * 100 };
+  }
+
+  function buildBoard(){
+    boardEl.innerHTML = '';
+    for(var i = 0; i < 9; i++){
+      var btn = document.createElement('button');
+      btn.className = 'cell';
+      btn.type = 'button';
+      btn.setAttribute('data-i', i);
+      btn.setAttribute('aria-label', 'Cell ' + (i + 1));
+      btn.innerHTML = '<svg viewBox="0 0 100 100"></svg>';
+      btn.addEventListener('click', onCellClick);
+      boardEl.appendChild(btn);
+    }
+  }
+
+  function markCell(i, player){
+    var cell = boardEl.children[i];
+    var svg = cell.querySelector('svg');
+    if(player === 'X'){
+      svg.innerHTML =
+        '<line class="chalk-mark x" pathLength="1" x1="26" y1="26" x2="74" y2="74"/>' +
+        '<line class="chalk-mark x" pathLength="1" x1="74" y1="26" x2="26" y2="74"/>';
+    } else {
+      svg.innerHTML = '<circle class="chalk-mark o" pathLength="1" cx="50" cy="50" r="28"/>';
+    }
+    cell.disabled = true;
+  }
+
+  function setStatus(html){ statusEl.innerHTML = html; }
+
+  function turnStatus(){
+    setStatus('<span class="who' + (current === 'O' ? ' o' : '') + '">' + current + '</span> to move');
+  }
+
+  function onCellClick(e){
+    if(over) return;
+    var i = Number(e.currentTarget.getAttribute('data-i'));
+    if(board[i]) return;
+
+    board[i] = current;
+    markCell(i, current);
+
+    var win = checkWin();
+    if(win){
+      over = true;
+      drawWinLine(win);
+      scores[current]++;
+      saveScores();
+      renderScores();
+      setStatus('<span class="who' + (current === 'O' ? ' o' : '') + '">' + current + '</span> takes the round');
+      disableRemaining();
+      return;
+    }
+
+    if(board.every(function(v){ return v; })){
+      over = true;
+      scores.D++;
+      saveScores();
+      renderScores();
+      setStatus('A draw — chalk it up');
+      return;
+    }
+
+    current = current === 'X' ? 'O' : 'X';
+    turnStatus();
+  }
+
+  function checkWin(){
+    for(var l = 0; l < LINES.length; l++){
+      var a = LINES[l][0], b = LINES[l][1], c = LINES[l][2];
+      if(board[a] && board[a] === board[b] && board[a] === board[c]) return LINES[l];
+    }
+    return null;
+  }
+
+  function drawWinLine(line){
+    var p1 = cellCenter(line[0]);
+    var p2 = cellCenter(line[2]);
+    var el = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    el.setAttribute('class', 'win-line');
+    el.setAttribute('pathLength', '1');
+    el.setAttribute('x1', p1.x); el.setAttribute('y1', p1.y);
+    el.setAttribute('x2', p2.x); el.setAttribute('y2', p2.y);
+    winSvg.appendChild(el);
+  }
+
+  function disableRemaining(){
+    for(var i = 0; i < boardEl.children.length; i++) boardEl.children[i].disabled = true;
+  }
+
+  function newGame(){
+    board = new Array(9).fill(null);
+    current = 'X';
+    over = false;
+    winSvg.innerHTML = '';
+    buildBoard();
+    turnStatus();
+  }
+
+  newGameBtn.addEventListener('click', newGame);
+  resetScoreBtn.addEventListener('click', function(){
+    scores = { X: 0, O: 0, D: 0 };
+    saveScores();
+    renderScores();
+  });
+
+  loadScores();
+  renderScores();
+  buildBoard();
+  turnStatus();
+})();
+</script>

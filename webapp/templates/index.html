@@ -1,0 +1,83 @@
+<title>Chalk &amp; Slate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+<div class="stage">
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <filter id="chalk-rough" filterUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="140">
+        <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.4" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+      <filter id="chalk-rough-lg" filterUnits="userSpaceOnUse" x="-20" y="-20" width="340" height="340">
+        <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.4" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <header>
+    <h1>Chalk &amp; Slate</h1>
+    <p class="caption">Tic-tac-toe, the old-fashioned way</p>
+  </header>
+
+  <p class="status">
+    {% if game_over and winner %}
+      <span class="who{% if winner == 'O' %} o{% endif %}">{{ winner }}</span> takes the round
+    {% elif game_over %}
+      A draw &mdash; chalk it up
+    {% else %}
+      <span class="who{% if current == 'O' %} o{% endif %}">{{ current }}</span> to move
+    {% endif %}
+  </p>
+
+  <div class="frame">
+    <div class="board-wrap">
+      <svg class="overlay" viewBox="0 0 300 300">
+        <line class="chalk-line" x1="100" y1="10" x2="100" y2="290"/>
+        <line class="chalk-line" x1="200" y1="10" x2="200" y2="290"/>
+        <line class="chalk-line" x1="10" y1="100" x2="290" y2="100"/>
+        <line class="chalk-line" x1="10" y1="200" x2="290" y2="200"/>
+      </svg>
+      <svg class="overlay" viewBox="0 0 300 300">
+        {% if win_line %}
+          <line class="win-line" pathLength="1"
+                x1="{{ win_line.x1 }}" y1="{{ win_line.y1 }}"
+                x2="{{ win_line.x2 }}" y2="{{ win_line.y2 }}"/>
+        {% endif %}
+      </svg>
+      <form class="board" method="post" action="{{ url_for('move') }}">
+        {% for mark in board %}
+          <button class="cell" type="submit" name="i" value="{{ loop.index0 }}"
+                  aria-label="Cell {{ loop.index }}"
+                  {% if mark or game_over %}disabled{% endif %}>
+            <svg viewBox="0 0 100 100">
+              {% if mark == 'X' %}
+                <line class="chalk-mark x" pathLength="1" x1="26" y1="26" x2="74" y2="74"/>
+                <line class="chalk-mark x" pathLength="1" x1="74" y1="26" x2="26" y2="74"/>
+              {% elif mark == 'O' %}
+                <circle class="chalk-mark o" pathLength="1" cx="50" cy="50" r="28"/>
+              {% endif %}
+            </svg>
+          </button>
+        {% endfor %}
+      </form>
+    </div>
+  </div>
+
+  <div class="scoreboard">
+    <div class="tally x"><span class="n">{{ scores.X }}</span><span class="lbl">X wins</span></div>
+    <div class="tally d"><span class="n">{{ scores.D }}</span><span class="lbl">Draws</span></div>
+    <div class="tally o"><span class="n">{{ scores.O }}</span><span class="lbl">O wins</span></div>
+  </div>
+
+  <div class="controls">
+    <form method="post" action="{{ url_for('new_game') }}">
+      <button class="new-game" type="submit">New game</button>
+    </form>
+    <form method="post" action="{{ url_for('reset_score') }}">
+      <button class="reset-score" type="submit">Reset score</button>
+    </form>
+  </div>
+</div>
